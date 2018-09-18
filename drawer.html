@@ -82,11 +82,12 @@
 <div style="width: 1350px; height: 600px; border: #8c9493 2px solid;">
     <div class="control">
         <div class="title">画布操作</div>
-        <input type="button" value="画笔" class="control_button"/>
-        <input type="button" value="清空" class="control_button"/>
-        <input type="button" value="识别" class="control_button"/>
-        <input type="button" value="导出" class="control_button"/>
-        <input type="button" value="导入" class="control_button"/>
+        <input type="button" value="画笔" id="draw" class="control_button"/>
+        <input type="button" value="擦除" id="remove" class="control_button"/>
+        <input type="button" value="清空" id="clear" class="control_button"/>
+        <input type="button" value="识别" id="identify" class="control_button"/>
+        <input type="button" value="导出" id="output" class="control_button"/>
+        <input type="button" value="导入" id="input" class="control_button"/>
     </div>
     <div style="display: inline">
         <canvas height="600" width="1197" id="canvas" style="display: inline-grid;"></canvas>
@@ -148,14 +149,16 @@
         }
     }
 
-    //画的方法
+    // 画的方法
     function draw(x, y) {
+        // console.log('x: ' + x);
+        // console.log('y: '+ y);
         ctx.beginPath();
 
-        //线的宽度
-        ctx.lineWidth = 5;
+        // 线的宽度
+        ctx.lineWidth = 3;
 
-        //线的样式
+        // 线的样式
         ctx.lineCap = "round";
         ctx.moveTo(x, y);
         ctx.lineTo(canvas.oldPoint.x, canvas.oldPoint.y);
@@ -163,45 +166,42 @@
         ctx.closePath();
     }
 
-    //获取改变颜色按钮
-    var btns = document.querySelectorAll(".changeColor input");
-    for (var i = 0; i < btns.length; i++) {
-        btns[i].onclick = changeColor;
-    }
-
-    //颜色匹配数据结构
-    var colorObj = {
-        "#000000": "黑色",
-        "#ffc0cb": "粉色",
-        "#ff0000": "红色",
-        "#ffa500": "橘色",
-        "#a52a2a": "棕色",
-        "#800080": "紫色"
+    // 绘画按钮
+    var drawBtn = document.getElementById('draw');
+    drawBtn.onclick = function () {
+        canvas.isDraw = true;
     };
 
-    //改变画笔颜色
-    function changeColor() {
-        ctx.strokeStyle = getComputedStyle(this, null).backgroundColor;
-        var b = document.querySelector("b");
-        b.style.color = ctx.strokeStyle;
+    // 橡皮擦按钮
+    var removeBtn = document.getElementById('remove');
+    removeBtn.onclick = function () {
+        // 改变状态为橡皮擦状态
+        canvas.isDraw = false;
+    };
 
-        b.innerHTML = colorObj[ctx.strokeStyle];
-
-        //改变画笔状态
-        canvas.isDraw = true;
-    }
-
-    var clearAllBtn = document.querySelector(".clear input");
-    clearAllBtn.onclick = function () {
+    // 清空按钮
+    var clearBtn = document.getElementById('clear');
+    clearBtn.onclick = function () {
+        // 清空画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
-    //橡皮擦按钮
-    var clearBtn = document.querySelector(".clear input:last-of-type");
+    // 识别按钮
+    var identifyBtn = document.getElementById('identify');
+    identifyBtn.onclick = function () {
+        // TODO
+    };
 
-    clearBtn.onclick = function () {
-        //改变状态为橡皮擦状态
-        canvas.isDraw = false;
+    // 导出按钮
+    var outputBtn = document.getElementById('output');
+    outputBtn.onclick = function () {
+        // TODO
+    };
+
+    // 导入按钮
+    var inputBtn = document.getElementById('input');
+    inputBtn.onclick = function () {
+        // TODO
     };
 
     //橡皮擦功能
