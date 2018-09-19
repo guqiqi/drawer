@@ -88,6 +88,8 @@
         <input type="button" value="识别" id="identify" class="control_button"/>
         <input type="button" value="导出" id="output" class="control_button"/>
         <input type="button" value="导入" id="input" class="control_button"/>
+        <input type="file" accept="image/*" value="导入" id="mock" style="display: none"/>
+        <input value="数字" id="result" style="width: 80%;height: 35px;margin: 10px 10%;padding-left: 5px"/>
     </div>
     <div style="display: inline">
         <canvas height="600" width="1197" id="canvas" style="display: inline-grid;"></canvas>
@@ -96,8 +98,11 @@
 </div>
 
 <script type="text/javascript">
-    var canvas = document.querySelector("#canvas");
-    var ctx = canvas.getContext("2d");
+    let canvas = document.querySelector("#canvas");
+    let ctx = canvas.getContext("2d");
+    let count_line = 0;
+    // 识别显示结果
+    let result = document.getElementById('result');
 
     //初始化当前画布为画笔状态
     canvas.isDraw = true;
@@ -105,8 +110,8 @@
     //按下事件
     canvas.addEventListener("mousedown", function (e) {
         //计算出鼠标点击在canvas中的位置
-        var x = e.offsetX;
-        var y = e.offsetY;
+        let x = e.offsetX;
+        let y = e.offsetY;
 
         //记录旧的点
         this.oldPoint = {
@@ -128,12 +133,13 @@
     });
 
     function up() {
+        count_line = count_line + 1;
         this.removeEventListener("mousemove", move);
     }
 
     function move(e) {
-        var x = e.offsetX;
-        var y = e.offsetY;
+        let x = e.offsetX;
+        let y = e.offsetY;
 
         if (this.isDraw) {
             //画笔功能
@@ -167,42 +173,80 @@
     }
 
     // 绘画按钮
-    var drawBtn = document.getElementById('draw');
+    let drawBtn = document.getElementById('draw');
     drawBtn.onclick = function () {
         canvas.isDraw = true;
     };
 
     // 橡皮擦按钮
-    var removeBtn = document.getElementById('remove');
+    let removeBtn = document.getElementById('remove');
     removeBtn.onclick = function () {
         // 改变状态为橡皮擦状态
         canvas.isDraw = false;
     };
 
     // 清空按钮
-    var clearBtn = document.getElementById('clear');
+    let clearBtn = document.getElementById('clear');
     clearBtn.onclick = function () {
         // 清空画布
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
     // 识别按钮
-    var identifyBtn = document.getElementById('identify');
+    let identifyBtn = document.getElementById('identify');
     identifyBtn.onclick = function () {
+        result.value = count_line;
         // TODO
     };
 
     // 导出按钮
-    var outputBtn = document.getElementById('output');
+    let outputBtn = document.getElementById('output');
     outputBtn.onclick = function () {
         // TODO
+        let a = document.createElement('a');
+        a.href = self.canvas.toDataURL('image/png');     //把画布转化为base64
+        a.download = 'image.jpeg';
+        a.id = 'download';
+        a.innerHTML = 'download';
+        document.body.appendChild(a);
+        document.getElementById('download').style.display = 'none';
+        document.getElementById('download').click();    //默认出发下载操作
     };
 
     // 导入按钮
-    var inputBtn = document.getElementById('input');
-    inputBtn.onclick = function () {
-        // TODO
+    let inputMockBtn = document.getElementById('mock');
+    inputMockBtn.onclick = function readFile() {
+        let file = this.files[0];//获取input输入的图片
+        if (!/image\/\w+/.test(file.type)) {
+            alert("请确保文件为图像类型");
+            return false;
+        }//判断是否图片，在移动端由于浏览器对调用file类型处理不同，虽然加了accept = 'image/*'，但是还要再次判断
+        let reader = new FileReader();
+        reader.readAsDataURL(file);//转化成base64数据类型
+        reader.onload = function () {
+            drawToCanvas(this.result);
+        };
+        console.log('click');
     };
+
+    let inputBtn = document.getElementById('input');
+    inputBtn.onclick = function () {
+        inputMockBtn.click();
+    };
+
+
+    function drawToCanvas(imgData) {
+        let cvs = document.querySelector('#canvas');
+        cvs.width = 300;
+        cvs.height = 400;
+        let ctx = cvs.getContext('2d');
+        let img = new Image;
+        img.src = imgData;
+        img.onload = function () {//必须onload之后再画
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            strDataURI = cvs.toDataURL();//获取canvas base64数据
+        }
+    }
 
     //橡皮擦功能
     function clearPart(x, y) {
@@ -216,6 +260,35 @@
         //还原场景
         ctx.restore();
     }
+
+    class Person {
+        constructor(name) {
+            this.name = name;
+        }
+
+        greet() {
+            console.log('Hello, I am ' + this.name);
+        }
+    }
+
+    class Student extends Person {
+        constructor(name, school) {
+            super(name);
+            this.school = school;
+        }
+
+        greet() {
+            console.log('Hello, I am ' + this.name + ',my school is ' + this.school);
+        }
+    }
+
+    let p1 = new Person('p1');
+    let s1 = new Student('s1', 'USTB');
+    p1.greet();//Hello, I am p1
+    console.log(p1.constructor === Person);//true
+    console.log(s1 instanceof Student);//true
+    console.log(s1 instanceof Person);//true
+    s1.greet();//Hello, I am s1my school is USTB
 </script>
 </body>
 </html>
