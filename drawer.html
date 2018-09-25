@@ -192,11 +192,21 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
-    // 识别按钮
+    // 识别按钮,笔画换个颜色,把识别结果记录出来
     let identifyBtn = document.getElementById('identify');
     identifyBtn.onclick = function () {
         result.value = count_line;
         // TODO
+        if(count_line === 1)
+            result.value = '圆';
+        else if(count_line === 2)
+            result.value = '三角形';
+        else if(count_line === 3)
+            result.value = '正方形';
+        else if(count_line === 4)
+            result.value = '长方形';
+        else
+            result.value = '无法识别';
     };
 
     // 导出按钮
@@ -233,7 +243,6 @@
     inputBtn.onclick = function () {
         inputMockBtn.click();
     };
-
 
     function drawToCanvas(imgData) {
         let cvs = document.querySelector('#canvas');
