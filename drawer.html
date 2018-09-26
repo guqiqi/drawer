@@ -13,6 +13,15 @@
             border-right: #8c9493 2px solid;
         }
 
+        .result_display {
+            background-color: #f1efef;
+            width: 150px;
+            height: 600px;
+            display: inline;
+            float: right;
+            border-left: #8c9493 2px solid;
+        }
+
         .title {
             font-family: 'Weibei SC';
             color: #2c3e48;
@@ -67,13 +76,17 @@
             top: 1px;
         }
 
-        #canvas {
-            width: 1197px;
-            height: 600px;
+        .single_result {
+            margin: 15%;
+            padding: 2%;
+            text-align: center;
+            border: #9e9388 2px solid;
+            border-radius: 5px;
         }
 
-        b {
-            font-size: 20px;
+        #canvas {
+            width: 1042px;
+            height: 600px;
         }
     </style>
 </head>
@@ -83,29 +96,31 @@
     <div class="control">
         <div class="title">画布操作</div>
         <input type="button" value="画笔" id="draw" class="control_button"/>
-        <input type="button" value="擦除" id="remove" class="control_button"/>
         <input type="button" value="清空" id="clear" class="control_button"/>
         <input type="button" value="识别" id="identify" class="control_button"/>
         <input type="button" value="导出" id="output" class="control_button"/>
         <input type="button" value="导入" id="input" class="control_button"/>
-        <input type="file" accept="image/*" value="导入" id="mock" style="display: none"/>
-        <input value="数字" id="result" style="width: 80%;height: 35px;margin: 10px 10%;padding-left: 5px"/>
+        <input type="file" accept="application/json" value="导入" id="mock" style="display: none"/>
     </div>
     <div style="display: inline">
-        <canvas height="600" width="1197" id="canvas" style="display: inline-grid;"></canvas>
+        <canvas height="600" width="1042" id="canvas" style="display: inline-grid;"></canvas>
     </div>
-
+    <div class="result_display" id="result_div">
+        <div class="title">识别结果</div>
+    </div>
 </div>
 
 <script type="text/javascript">
     let canvas = document.querySelector("#canvas");
     let ctx = canvas.getContext("2d");
     let count_line = 0;
-    // 识别显示结果
-    let result = document.getElementById('result');
 
-    //初始化当前画布为画笔状态
-    canvas.isDraw = true;
+    // 初始化笔画颜色
+    let stokeColor = getStrokeColor();
+
+    // 初始化
+    let shapes = []; // 图像集
+    let points = []; // 点集
 
     //按下事件
     canvas.addEventListener("mousedown", function (e) {
@@ -119,35 +134,29 @@
             y: y - 1
         };
 
-        if (this.isDraw) {
-            //画笔功能
-            draw(x, y);
-        } else {
-            //橡皮擦功能
-            clearPart(x, y);
-        }
+        //画笔功能
+        drawPointToCanvas(x, y, canvas.oldPoint.x, canvas.oldPoint.y, stokeColor);
 
         //绑定移动和抬起事件
         this.addEventListener("mousemove", move);
         this.addEventListener("mouseup", up);
     });
 
+    // 鼠标抬起
     function up() {
         count_line = count_line + 1;
         this.removeEventListener("mousemove", move);
     }
 
+    // 鼠标移动
     function move(e) {
         let x = e.offsetX;
         let y = e.offsetY;
 
-        if (this.isDraw) {
-            //画笔功能
-            draw(x, y);
-        } else {
-            //橡皮擦功能
-            clearPart(x, y);
-        }
+        // 记录点
+        points.push(new My_Point(x, y));
+
+        drawPointToCanvas(x, y, canvas.oldPoint.x, canvas.oldPoint.y, stokeColor);
 
         this.oldPoint = {
             x: x,
@@ -155,88 +164,73 @@
         }
     }
 
-    // 画的方法
-    function draw(x, y) {
-        // console.log('x: ' + x);
-        // console.log('y: '+ y);
-        ctx.beginPath();
-
-        // 线的宽度
-        ctx.lineWidth = 3;
-
-        // 线的样式
-        ctx.lineCap = "round";
-        ctx.moveTo(x, y);
-        ctx.lineTo(canvas.oldPoint.x, canvas.oldPoint.y);
-        ctx.stroke();
-        ctx.closePath();
-    }
-
     // 绘画按钮
     let drawBtn = document.getElementById('draw');
     drawBtn.onclick = function () {
-        canvas.isDraw = true;
-    };
-
-    // 橡皮擦按钮
-    let removeBtn = document.getElementById('remove');
-    removeBtn.onclick = function () {
-        // 改变状态为橡皮擦状态
-        canvas.isDraw = false;
     };
 
     // 清空按钮
     let clearBtn = document.getElementById('clear');
     clearBtn.onclick = function () {
-        // 清空画布
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        clearCanvas();
     };
 
     // 识别按钮,笔画换个颜色,把识别结果记录出来
     let identifyBtn = document.getElementById('identify');
     identifyBtn.onclick = function () {
-        result.value = count_line;
-        // TODO
-        if(count_line === 1)
-            result.value = '圆';
-        else if(count_line === 2)
-            result.value = '三角形';
-        else if(count_line === 3)
-            result.value = '正方形';
-        else if(count_line === 4)
-            result.value = '长方形';
+        let result = '';
+        // TODO 识别,目前还是根据笔画循序来识别
+        if (count_line === 1)
+            result = '圆';
+        else if (count_line === 2)
+            result = '三角形';
+        else if (count_line === 3)
+            result = '正方形';
+        else if (count_line === 4)
+            result = '长方形';
         else
-            result.value = '无法识别';
+            result = '无法识别';
+
+        // 展示识别结果
+        addResult(stokeColor, result);
+
+        // 记录该图形
+        shapes.push(new Shape(stokeColor, result, points));
+        // 清空点集和笔画计数
+        points = [];
+        count_line = 0;
+
+        // 变换颜色
+        stokeColor = getStrokeColor();
     };
 
     // 导出按钮
     let outputBtn = document.getElementById('output');
     outputBtn.onclick = function () {
-        // TODO
-        let a = document.createElement('a');
-        a.href = self.canvas.toDataURL('image/png');     //把画布转化为base64
-        a.download = 'image.jpeg';
-        a.id = 'download';
-        a.innerHTML = 'download';
-        document.body.appendChild(a);
-        document.getElementById('download').style.display = 'none';
-        document.getElementById('download').click();    //默认出发下载操作
+        // 下载到本地
+        let json = JSON.stringify(shapes);
+        let filestr = "data:text/json;charset=utf-8," + encodeURIComponent(json);
+        let downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", filestr);
+        downloadAnchorNode.setAttribute("download", 'draw.json');
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
     };
 
     // 导入按钮
     let inputMockBtn = document.getElementById('mock');
-    inputMockBtn.onclick = function readFile() {
+    inputMockBtn.onchange = function readFile() {
         let file = this.files[0];//获取input输入的图片
-        if (!/image\/\w+/.test(file.type)) {
-            alert("请确保文件为图像类型");
-            return false;
-        }//判断是否图片，在移动端由于浏览器对调用file类型处理不同，虽然加了accept = 'image/*'，但是还要再次判断
         let reader = new FileReader();
-        reader.readAsDataURL(file);//转化成base64数据类型
-        reader.onload = function () {
-            drawToCanvas(this.result);
+        reader.onload = function (ev) {
+            // 解析成json
+            loadfile = ev.target.result;
+            let newshapes = JSON.parse(loadfile);
+
+            // 重新绘画
+            drawToCanvas(newshapes);
         };
-        console.log('click');
+        reader.readAsText(file);
     };
 
     let inputBtn = document.getElementById('input');
@@ -244,60 +238,92 @@
         inputMockBtn.click();
     };
 
-    function drawToCanvas(imgData) {
-        let cvs = document.querySelector('#canvas');
-        cvs.width = 300;
-        cvs.height = 400;
-        let ctx = cvs.getContext('2d');
-        let img = new Image;
-        img.src = imgData;
-        img.onload = function () {//必须onload之后再画
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            strDataURI = cvs.toDataURL();//获取canvas base64数据
-        }
-    }
-
-    //橡皮擦功能
-    function clearPart(x, y) {
-        //保存场景
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x, y, 10, 0, Math.PI * 2, false);
-        ctx.clip();
+    // 清空画布
+    function clearCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        //还原场景
-        ctx.restore();
-    }
+        // 计数归零
+        count_line = 0;
+        shapes = [];
+        points = [];
 
-    class Person {
-        constructor(name) {
-            this.name = name;
-        }
-
-        greet() {
-            console.log('Hello, I am ' + this.name);
+        // 清空识别结果
+        let parent = document.getElementById('result_div');
+        while (parent.children.length !== 0) {
+            parent.removeChild(parent.children[0]);
         }
     }
 
-    class Student extends Person {
-        constructor(name, school) {
-            super(name);
-            this.school = school;
-        }
+    // 重新画图到canvas
+    function drawToCanvas(newshapes) {
+        // 清空画板
+        clearCanvas();
+        shapes = newshapes;
 
-        greet() {
-            console.log('Hello, I am ' + this.name + ',my school is ' + this.school);
+        for (let i = 0; i < shapes.length; i++) {
+            let points = shapes[i]['points'];
+            let color = shapes[i]['color'];
+            let tag = shapes[i]['tag'];
+            // 标注
+            addResult(color, tag);
+            // 画点
+            for (let j = 0; j < points.length - 1; j++) {
+                drawPointToCanvas(points[j].x, points[j].y, points[j + 1].x, points[j + 1].y, color);
+            }
         }
     }
 
-    let p1 = new Person('p1');
-    let s1 = new Student('s1', 'USTB');
-    p1.greet();//Hello, I am p1
-    console.log(p1.constructor === Person);//true
-    console.log(s1 instanceof Student);//true
-    console.log(s1 instanceof Person);//true
-    s1.greet();//Hello, I am s1my school is USTB
+    // 每个点的绘画方法
+    function drawPointToCanvas(x1, y1, x2, y2, color) {
+        ctx.beginPath();
+
+        // 线的颜色
+        ctx.strokeStyle = color;
+        // 线的宽度
+        ctx.lineWidth = 3;
+
+        // 线的样式
+        ctx.lineCap = "round";
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.closePath();
+    }
+
+    // 添加识别结果
+    function addResult(color, result) {
+        let dom = '<div class="single_result" style="color: ' + color + '">' + result + '</div>';
+        document.getElementById('result_div').insertAdjacentHTML('beforeend', dom);
+    }
+
+    // 随机产生笔画颜色
+    function getStrokeColor() {
+        let random_number = Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase();
+        let random_color = "#" + "000000".substring(0, 6 - random_number) + random_number;
+
+        while (random_color === document.body.style.backgroundColor) {
+            random_number = Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase();
+            random_color = "#" + "000000".substring(0, 6 - random_number) + random_number;
+        }
+        return random_color;
+    }
+
+    // 点
+    class My_Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    // 形状
+    class Shape {
+        constructor(color, result, points) {
+            this.tag = result;
+            this.points = points;
+            this.color = color;
+        }
+    }
 </script>
 </body>
 </html>
