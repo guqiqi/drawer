@@ -1,188 +1,329 @@
 <!DOCTYPE html>
-<html>
-<meta http-equiv="content-type" Content="text/html;charset=utf-8">
+<html lang="en">
 <head>
-
-    <title>简易画板</title>
-
-    <style>
-        #eraseImg { /*橡皮样式*//**/
-            border: solid;
-            color: gray;
-            border-radius: 118px;
-            width: 5px;
-            height: 5px;
-            position: absolute;
-            display: none;
-
+    <meta charset="UTF-8">
+    <title>画板</title>
+    <style type="text/css">
+        .control {
+            background-color: #f1efef;
+            width: 150px;
+            height: 600px;
+            display: inline;
+            float: left;
+            border-right: #8c9493 2px solid;
         }
 
-        .eraseSeries { /*橡皮大小单选按钮组的排列，此div不单独占一行*/
+        .result_display {
+            background-color: #f1efef;
+            width: 150px;
+            height: 600px;
+            display: inline;
+            float: right;
+            border-left: #8c9493 2px solid;
+        }
+
+        .title {
+            font-family: 'Weibei SC';
+            color: #2c3e48;
+            margin-left: 15%;
+            font-size: 25px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .control_button {
+            width: 80%;
+            height: 35px;
+            margin: 10px 10%;
+            -moz-box-shadow: 0 10px 14px -7px #5e695f;
+            -webkit-box-shadow: 0 10px 14px -7px #5e695f;
+            box-shadow: 0 10px 14px -7px #5e695f;
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #a8adad), color-stop(1, #8c9493));
+            background: -moz-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+            background: -webkit-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+            background: -o-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+            background: -ms-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+            background: linear-gradient(to bottom, #a8adad 5%, #8c9493 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#a8adad', endColorstr='#8c9493', GradientType=0);
+            background-color: #a8adad;
+            -moz-border-radius: 6px;
+            -webkit-border-radius: 6px;
+            border-radius: 6px;
             display: inline-block;
+            cursor: pointer;
+            color: #ffffff;
+            font-family: 'Hannotate SC';
+            font-size: 9px;
+            font-weight: bold;
+            padding: 3px 32px;
+            text-decoration: none;
+            text-shadow: 0 1px 0 #141c13;
         }
 
+        .control_button:hover {
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #8c9493), color-stop(1, #a8adad));
+            background: -moz-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+            background: -webkit-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+            background: -o-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+            background: -ms-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+            background: linear-gradient(to bottom, #8c9493 5%, #a8adad 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#8c9493', endColorstr='#a8adad', GradientType=0);
+            background-color: #8c9493;
+        }
 
+        .control_button:active {
+            position: relative;
+            top: 1px;
+        }
+
+        .single_result {
+            margin: 15%;
+            padding: 2%;
+            text-align: center;
+            border: #9e9388 2px solid;
+            border-radius: 5px;
+        }
+
+        #canvas {
+            width: 1042px;
+            height: 600px;
+        }
     </style>
-    <script src="jquery-3.3.1.min.js"></script>
-    <script>
-
-
-        var c;//获取到的2d画板
-        var painting = false;//判断是否正在绘画，即鼠标左键是否长按下去
-        var canvas;//画板
-        $(function () {
-
-            $(".eraseSeries").hide();//初始状态单选按钮组隐藏
-
-            canvas = document.getElementById("myCanvas");
-            c = canvas.getContext("2d");
-            c.lineCap = "round";//设置笔迹边角，否则笔迹会出现断层
-            c.strokeStyle = "black";//笔迹的颜色
-            c.lineWidth = 5;//笔迹的粗细
-            $("#color").change(function () {//笔迹颜色发生改变时
-                if (eraseFlag == true)//处在擦皮状态
-                {
-                    $("#erase").trigger("click");//自动触发橡皮的点击事件，以返回到画笔状态
-                }
-                c.strokeStyle = $(this).val();//设置画笔状态
-                c.lineWidth = $(this).val();
-
-            });
-
-            $("#fontSize").change(function () {//画笔粗细发生改变
-                if (eraseFlag == true)//同上
-                {
-                    $("#erase").trigger("click");
-                }
-                c.lineWidth = $(this).val();
-                c.strokeStyle = $("#color").val();
-                //eraseFlag=false;
-            });
-
-            $(".eraseSeries").click(function () {//橡皮大小发生改变
-                var size = $('input[name="eraseSize"]:checked').val();//获取到橡皮单选按钮组的选中值
-                sizeE = size;//将该值传到全局变量上，sizeE需要用来控制橡皮样式的位置
-                c.lineWidth = size;
-                $("#eraseImg").css({"width": size + "px", "height": size + "px"});//橡皮样式大小发生改变
-            });
-
-            $("#erase").toggle(function () {//橡皮按钮的点击翻转事件
-                c.save();//保持上次设置的状态
-                eraseFlag = true;
-                c.strokeStyle = "white";
-
-                $("#erase").text("画笔");//改变按钮上的文字
-                $(".eraseSeries").show('fast');//橡皮单选组出现
-                //  $("#eraseImg").show();
-                sizeE = 5;
-
-
-            }, function () {
-                eraseFlag = false;
-                $("#erase").text("橡皮");
-                $(".eraseSeries").hide('fast');
-                c.restore();//恢复上次画笔的状态（包括颜色，粗细等）
-            });
-
-
-            //setInterval(paint,2);
-
-        });
-
-
-        var p_x;//上次鼠标位置
-        var p_y;
-        var p_x_now;//当前瞬间鼠标位置
-        var p_y_now;
-        var eraseFlag = false;
-        var sizeE;//橡皮大小
-
-
-        $(document).mousedown(function (e) {//鼠标按下触发事件
-
-
-            // alert(sizeE);
-            p_x = e.clientX;//获取位置，并置为上次鼠标位置
-            p_y = e.clientY;
-            painting = true;//画笔启动标志
-
-        });
-        $(document).mousemove(function (e) {//鼠标移动触发事件
-            if (eraseFlag == true && e.clientY > 30)//橡皮处在激活状态，并且鼠标Y的位置大于30，也即鼠标在画板内
-            {
-
-                //橡皮图像跟随鼠标而动
-                $("#eraseImg").animate({left: e.clientX - sizeE + "px", top: e.clientY - sizeE + "px"}, 0).show('fast');
-
-
-            }
-            else {
-                $("#eraseImg").hide('fast');
-            }
-            if (painting == true)//处于画笔激活状态
-            {
-                //alert(1);
-                p_x_now = e.clientX;//当前瞬间的鼠标位置
-                p_y_now = e.clientY;
-                c.beginPath();//开始路径
-                //曲线是由一段段非常小的直线构成，计算机运算速度很快，这是一种以直线迭代画曲线的方式
-                c.moveTo(p_x - 5 - canvas.offsetLeft, p_y - 5 - canvas.offsetTop);//移动到起始点
-                c.lineTo(p_x_now - 5 - canvas.offsetLeft, p_y_now - 5 - canvas.offsetTop);//从起始点画直线到终点
-
-                c.stroke();
-                c.closePath();//封闭路径，这个很重要，如果路径不封闭，
-                              // 那么只要canvas颜色发生改变，所有的之前画过的颜色都发生改变
-
-
-                p_x = p_x_now;//一次迭代后讲当前的瞬间坐标值赋给上次鼠标坐标值
-                p_y = p_y_now;
-            }
-
-        });
-
-        $(document).mouseup(function (e) {//鼠标松开触发事件
-
-            painting = false;//冻结画笔
-        });
-
-
-    </script>
 </head>
 <body>
-<div>
-    <select id="color"> <!--画笔颜色-->
-        <option class="opt" value="red">红色</option>
-        <option class="opt" value="yellow">黄色</option>
-        <option class="opt" value="blue">蓝色</option>
-        <option class="opt" value="black" selected>黑色</option>
-        <option class="opt" value="green">绿色</option>
-    </select>
 
-    <select id="fontSize"> <!--画笔大小-->
-        <option value=5 selected>5</option>
-        <option value=10>10</option>
-        <option value=15>15</option>
-        <option value=20>20</option>
-        <option value=30>30</option>
-    </select>
-    <button id="erase">擦皮</button> <!--橡皮按钮-->
-    <div class="eraseSeries"> <!--橡皮大小-->
-        <input type="radio" name="eraseSize" value="5" checked/>5
-        <input type="radio" name="eraseSize" value="10"/>10
-        <input type="radio" name="eraseSize" value="15"/> 15
-        <input type="radio" name="eraseSize" value="20"/> 20
-        <input type="radio" name="eraseSize" value="30"/>30
+<div style="width: 1350px; height: 600px; border: #8c9493 2px solid;">
+    <div class="control">
+        <div class="title">画布操作</div>
+        <input type="button" value="画笔" id="draw" class="control_button"/>
+        <input type="button" value="清空" id="clear" class="control_button"/>
+        <input type="button" value="识别" id="identify" class="control_button"/>
+        <input type="button" value="导出" id="output" class="control_button"/>
+        <input type="button" value="导入" id="input" class="control_button"/>
+        <input type="file" accept="application/json" value="导入" id="mock" style="display: none"/>
+    </div>
+    <div style="display: inline">
+        <canvas height="600" width="1042" id="canvas" style="display: inline-grid;"></canvas>
+    </div>
+    <div class="result_display" id="result_div">
+        <div class="title">识别结果</div>
     </div>
 </div>
 
+<script type="text/javascript">
+    let canvas = document.querySelector("#canvas");
+    let ctx = canvas.getContext("2d");
+    let count_line = 0;
 
-<!--<button id="btn">btn</button>-->
-<canvas id="myCanvas" width="1420" height="780" style="border: solid"></canvas> <!--整个画布-->
+    // 初始化笔画颜色
+    let stokeColor = getStrokeColor();
 
-<div id="eraseImg"> <!--橡皮形状-->
-</div>
+    // 初始化
+    let shapes = []; // 图像集
+    let points = []; // 点集
 
+    //按下事件
+    canvas.addEventListener("mousedown", function (e) {
+        //计算出鼠标点击在canvas中的位置
+        let x = e.offsetX;
+        let y = e.offsetY;
 
+        //记录旧的点
+        this.oldPoint = {
+            x: x - 1,
+            y: y - 1
+        };
+
+        //画笔功能
+        drawPointToCanvas(x, y, canvas.oldPoint.x, canvas.oldPoint.y, stokeColor);
+
+        //绑定移动和抬起事件
+        this.addEventListener("mousemove", move);
+        this.addEventListener("mouseup", up);
+    });
+
+    // 鼠标抬起
+    function up() {
+        count_line = count_line + 1;
+        this.removeEventListener("mousemove", move);
+    }
+
+    // 鼠标移动
+    function move(e) {
+        let x = e.offsetX;
+        let y = e.offsetY;
+
+        // 记录点
+        points.push(new My_Point(x, y));
+
+        drawPointToCanvas(x, y, canvas.oldPoint.x, canvas.oldPoint.y, stokeColor);
+
+        this.oldPoint = {
+            x: x,
+            y: y
+        }
+    }
+
+    // 绘画按钮
+    let drawBtn = document.getElementById('draw');
+    drawBtn.onclick = function () {
+    };
+
+    // 清空按钮
+    let clearBtn = document.getElementById('clear');
+    clearBtn.onclick = function () {
+        clearCanvas();
+    };
+
+    // 识别按钮,笔画换个颜色,把识别结果记录出来
+    let identifyBtn = document.getElementById('identify');
+    identifyBtn.onclick = function () {
+        let result = '';
+        // TODO 识别,目前还是根据笔画循序来识别
+        if (count_line === 1)
+            result = '圆';
+        else if (count_line === 2)
+            result = '三角形';
+        else if (count_line === 3)
+            result = '正方形';
+        else if (count_line === 4)
+            result = '长方形';
+        else
+            result = '无法识别';
+
+        // 展示识别结果
+        addResult(stokeColor, result);
+
+        // 记录该图形
+        shapes.push(new Shape(stokeColor, result, points));
+        // 清空点集和笔画计数
+        points = [];
+        count_line = 0;
+
+        // 变换颜色
+        stokeColor = getStrokeColor();
+    };
+
+    // 导出按钮
+    let outputBtn = document.getElementById('output');
+    outputBtn.onclick = function () {
+        // 下载到本地
+        let json = JSON.stringify(shapes);
+        let filestr = "data:text/json;charset=utf-8," + encodeURIComponent(json);
+        let downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", filestr);
+        downloadAnchorNode.setAttribute("download", 'draw.json');
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
+
+    // 导入按钮
+    let inputMockBtn = document.getElementById('mock');
+    inputMockBtn.onchange = function readFile() {
+        let file = this.files[0];//获取input输入的图片
+        let reader = new FileReader();
+        reader.onload = function (ev) {
+            // 解析成json
+            loadfile = ev.target.result;
+            let newshapes = JSON.parse(loadfile);
+
+            // 重新绘画
+            drawToCanvas(newshapes);
+        };
+        reader.readAsText(file);
+    };
+
+    let inputBtn = document.getElementById('input');
+    inputBtn.onclick = function () {
+        inputMockBtn.click();
+    };
+
+    // 清空画布
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // 计数归零
+        count_line = 0;
+        shapes = [];
+        points = [];
+
+        // 清空识别结果
+        let parent = document.getElementById('result_div');
+        while (parent.children.length !== 0) {
+            parent.removeChild(parent.children[0]);
+        }
+    }
+
+    // 重新画图到canvas
+    function drawToCanvas(newshapes) {
+        // 清空画板
+        clearCanvas();
+        shapes = newshapes;
+
+        for (let i = 0; i < shapes.length; i++) {
+            let points = shapes[i]['points'];
+            let color = shapes[i]['color'];
+            let tag = shapes[i]['tag'];
+            // 标注
+            addResult(color, tag);
+            // 画点
+            for (let j = 0; j < points.length - 1; j++) {
+                drawPointToCanvas(points[j].x, points[j].y, points[j + 1].x, points[j + 1].y, color);
+            }
+        }
+    }
+
+    // 每个点的绘画方法
+    function drawPointToCanvas(x1, y1, x2, y2, color) {
+        ctx.beginPath();
+
+        // 线的颜色
+        ctx.strokeStyle = color;
+        // 线的宽度
+        ctx.lineWidth = 3;
+
+        // 线的样式
+        ctx.lineCap = "round";
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.closePath();
+    }
+
+    // 添加识别结果
+    function addResult(color, result) {
+        let dom = '<div class="single_result" style="color: ' + color + '">' + result + '</div>';
+        document.getElementById('result_div').insertAdjacentHTML('beforeend', dom);
+    }
+
+    // 随机产生笔画颜色
+    function getStrokeColor() {
+        let random_number = Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase();
+        let random_color = "#" + "000000".substring(0, 6 - random_number) + random_number;
+
+        while (random_color === document.body.style.backgroundColor) {
+            random_number = Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase();
+            random_color = "#" + "000000".substring(0, 6 - random_number) + random_number;
+        }
+        return random_color;
+    }
+
+    // 点
+    class My_Point {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    // 形状
+    class Shape {
+        constructor(color, result, points) {
+            this.tag = result;
+            this.points = points;
+            this.color = color;
+        }
+    }
+</script>
 </body>
 </html>
-
