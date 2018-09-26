@@ -1,0 +1,85 @@
+.control {
+    background-color: #f1efef;
+    width: 150px;
+    height: 600px;
+    display: inline;
+    float: left;
+    border-right: #8c9493 2px solid;
+}
+
+.result_display {
+    background-color: #f1efef;
+    width: 150px;
+    height: 600px;
+    display: inline;
+    float: right;
+    border-left: #8c9493 2px solid;
+    overflow: scroll;
+}
+
+.title {
+    font-family: 'Weibei SC';
+    color: #2c3e48;
+    margin-left: 15%;
+    font-size: 25px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.control_button {
+    width: 80%;
+    height: 35px;
+    margin: 10px 10%;
+    -moz-box-shadow: 0 10px 14px -7px #5e695f;
+    -webkit-box-shadow: 0 10px 14px -7px #5e695f;
+    box-shadow: 0 10px 14px -7px #5e695f;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #a8adad), color-stop(1, #8c9493));
+    background: -moz-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+    background: -webkit-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+    background: -o-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+    background: -ms-linear-gradient(top, #a8adad 5%, #8c9493 100%);
+    background: linear-gradient(to bottom, #a8adad 5%, #8c9493 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#a8adad', endColorstr='#8c9493', GradientType=0);
+    background-color: #a8adad;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    display: inline-block;
+    cursor: pointer;
+    color: #ffffff;
+    font-family: 'Hannotate SC';
+    font-size: 9px;
+    font-weight: bold;
+    padding: 3px 32px;
+    text-decoration: none;
+    text-shadow: 0 1px 0 #141c13;
+}
+
+.control_button:hover {
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0.05, #8c9493), color-stop(1, #a8adad));
+    background: -moz-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+    background: -webkit-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+    background: -o-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+    background: -ms-linear-gradient(top, #8c9493 5%, #a8adad 100%);
+    background: linear-gradient(to bottom, #8c9493 5%, #a8adad 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#8c9493', endColorstr='#a8adad', GradientType=0);
+    background-color: #8c9493;
+}
+
+.control_button:active {
+    position: relative;
+    top: 1px;
+}
+
+.single_result {
+    margin: 15%;
+    padding: 2%;
+    text-align: center;
+    border: #9e9388 2px solid;
+    border-radius: 5px;
+}
+
+#canvas {
+    width: 1042px;
+    height: 600px;
+}
